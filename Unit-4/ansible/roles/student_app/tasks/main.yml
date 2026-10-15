@@ -1,0 +1,49 @@
+---
+- name: Create app and data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ app_dir }}"
+    - "{{ app_dir }}/src"
+    - "{{ app_dir }}/data"
+
+- name: Copy application source
+  ansible.builtin.copy:
+    src: app/
+    dest: "{{ app_dir }}/src/"
+    mode: "0644"
+  register: app_src
+
+- name: Build Docker image
+  community.docker.docker_image:
+    name: "{{ app_image }}"
+    source: build
+    build:
+      path: "{{ app_dir }}/src"
+    force_source: "{{ app_src.changed }}"
+
+- name: Run Student Record container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: "{{ app_image }}"
+    state: started
+    restart_policy: always
+    published_ports:
+      - "{{ app_port }}:{{ app_port }}"
+    volumes:
+      - "{{ app_dir }}/data:/data"
+    env:
+      DB_PATH: /data/students.db
+      PORT: "{{ app_port | string }}"
+    recreate: "{{ app_src.changed }}"
+
+- name: Wait for app health endpoint
+  ansible.builtin.uri:
+    url: "http://localhost:{{ app_port }}/api/health"
+  register: app_health
+  until: app_health.status == 200
+  retries: 10
+  delay: 3
+  changed_when: false

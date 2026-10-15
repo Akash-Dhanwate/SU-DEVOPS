@@ -1,0 +1,35 @@
+---
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+- name: Remove default site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Deploy reverse proxy config (Jinja2)
+  ansible.builtin.template:
+    src: student-app.conf.j2
+    dest: /etc/nginx/sites-available/{{ app_name }}.conf
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/{{ app_name }}.conf
+    dest: /etc/nginx/sites-enabled/{{ app_name }}.conf
+    state: link
+  notify: Reload nginx
+
+- name: Validate Nginx config
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Enable and start Nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started

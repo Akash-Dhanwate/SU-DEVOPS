@@ -1,0 +1,8 @@
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+*.pem
+*-aws-key
+ansible/inventory/hosts.ini
+*.retry

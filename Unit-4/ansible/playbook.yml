@@ -1,0 +1,27 @@
+---
+- name: Configure Student Record & Academic Platform server
+  hosts: student_servers
+  become: true
+
+  pre_tasks:
+    - name: Wait for SSH to become available
+      ansible.builtin.wait_for_connection:
+        delay: 5
+        timeout: 300
+
+  roles:
+    - common
+    - docker
+    - nginx
+    - student_app
+
+  post_tasks:
+    - name: Verify app through Nginx on port 80
+      ansible.builtin.uri:
+        url: http://localhost/api/health
+        return_content: true
+      register: health
+      until: health.status == 200
+      retries: 10
+      delay: 3
+      changed_when: false

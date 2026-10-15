@@ -1,0 +1,2 @@
+# cp terraform.tfvars.example terraform.tfvars
+ssh_allowed_cidr = "YOUR.PUBLIC.IP.HERE/32"   # curl -s ifconfig.me

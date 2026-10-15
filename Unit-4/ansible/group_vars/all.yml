@@ -1,0 +1,5 @@
+app_name: student-app
+app_port: 8080
+app_dir: /opt/student-app
+app_image: student-app:v1.0.0
+docker_user: ubuntu
